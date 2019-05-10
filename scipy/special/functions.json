@@ -1,4 +1,14 @@
 {
+    "_cosine_cdf": {
+        "_cosine_distr.pxd": {
+            "cosine_cdf": "d->d"
+        }
+    },
+    "_cosine_invcdf": {
+        "_cosine_distr.pxd": {
+            "cosine_invcdf": "d->d"
+        }
+    },
     "_cospi": {
 	"cephes.h": {
 	    "cospi": "d->d"

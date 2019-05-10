@@ -5122,3 +5122,23 @@ def test_rvs_no_size_warning():
 
     with assert_warns(np.VisibleDeprecationWarning):
         rvs_no_size.rvs()
+
+
+# Check a few values of the cosine distribution's cdf, sf, ppf and
+# isf methods.  Expected values were computed with mpmath.
+
+@pytest.mark.parametrize('x, expected',
+                         [(-3.14159, 4.956444476505336e-19),
+                          (3.14, 0.9999999998928399)])
+def test_cosine_cdf_sf(x, expected):
+    assert_allclose(stats.cosine.cdf(x), expected)
+    assert_allclose(stats.cosine.sf(-x), expected)
+
+
+@pytest.mark.parametrize('p, expected',
+                         [(1e-6, -3.1080612413765905),
+                          (1e-17, -3.141585429601399),
+                          (0.975, 2.1447547020964923)])
+def test_cosine_ppf_isf(p, expected):
+    assert_allclose(stats.cosine.ppf(p), expected)
+    assert_allclose(stats.cosine.isf(p), -expected)
