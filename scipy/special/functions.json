@@ -1,11 +1,11 @@
 {
     "_cosine_cdf": {
-        "_cosine_distr.pxd": {
+        "_cosine.h": {
             "cosine_cdf": "d->d"
         }
     },
     "_cosine_invcdf": {
-        "_cosine_distr.pxd": {
+        "_cosine.h": {
             "cosine_invcdf": "d->d"
         }
     },
