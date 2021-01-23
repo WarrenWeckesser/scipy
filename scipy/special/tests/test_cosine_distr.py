@@ -8,8 +8,10 @@ from scipy.special._ufuncs import _cosine_cdf, _cosine_invcdf
 # These values are (x, p) where p is the expected exact value of 
 # _cosine_cdf(x).  These values will be tested for exact agreement.
 _coscdf_exact = [
+    (-4.0, 0.0),
     (0, 0.5),
     (np.pi, 1.0),
+    (4.0, 1.0),
 ]
 
 @pytest.mark.parametrize("x, expected", _coscdf_exact)
@@ -53,12 +55,19 @@ def test_cosine_invcdf_exact(p, expected):
     assert _cosine_invcdf(p) == expected
 
 
+def test_cosine_invcdf_invalid_p():
+    # Check that p values outside of [0, 1] return nan.
+    assert np.isnan(_cosine_invcdf([-0.1, 1.1])).all()
+
+
 # These values are (p, x), where x is the expected value of _cosine_invcdf(p).
 # The expected values were computed with mpmath using 50 digits of precision.
 _cosinvcdf_close = [
     (1e-50, -np.pi),
     (1e-14, -3.1415204137058454),
     (1e-08, -3.1343686589124524),
+    (0.0018001, -2.732563923138336),
+    (0.010, -2.41276589008678),
     (0.060, -1.7881244975330157),
     (0.125, -1.3752523669869274),
     (0.250, -0.831711193579736),

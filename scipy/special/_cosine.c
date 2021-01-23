@@ -232,7 +232,6 @@ double cosine_invcdf(double p)
 {
     double x;
     double y, y2;
-    double f0, f1, f2;
     int i;
     int sgn = 1;
     double prevx;
@@ -265,27 +264,17 @@ double cosine_invcdf(double p)
     // accurate that no more work is needed.  Similarly, for p > 0.42,
     // the Pade approximant is sufficiently accurate.  In between these
     // bounds, we refine the estimate with Halley's method.
-
     if ((0.0018 < p) && (p < 0.42)) {
-        // Several iterations of Halley's method:
-        //    f(x) = pi + x + sin(x) - y,  f'(x) = 1 + cos(x), f''(x) = -sin(x)
+        // Apply one iteration of Halley's method, with
+        //    f(x)   = pi + x + sin(x) - y,
+        //    f'(x)  = 1 + cos(x),
+        //    f''(x) = -sin(x)
         // where y = 2*pi*p.
-        prevx = x;
-        for (i = 0; i < 12; ++i) {
-            f0 = M_PI + x + sin(x) - 2*M_PI*p;
-            f1 = 1 + cos(x);
-            f2 = -sin(x);
-            x = x - 2*f0*f1/(2*f1*f1 - f0*f2);
-            if (fabs(x - prevx)/x < 5e-15) {
-                break;
-            }
-            prevx = x;
-        }
-        if (i == 12) {
-            // This should not happen!  Extensive testing shows that the loop
-            // should break before completing 12 iterations.
-            x = NAN;
-        }
+        double f0, f1, f2;
+        f0 = M_PI + x + sin(x) - 2*M_PI*p;
+        f1 = 1 + cos(x);
+        f2 = -sin(x);
+        x = x - 2*f0*f1/(2*f1*f1 - f0*f2);
     }
 
     return sgn*x;
