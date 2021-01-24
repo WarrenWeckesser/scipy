@@ -231,10 +231,7 @@ double _poly_approx(double s)
 double cosine_invcdf(double p)
 {
     double x;
-    double y, y2;
-    int i;
     int sgn = 1;
-    double prevx;
 
     if ((p < 0) || (p > 1)) {
         return NAN;
@@ -255,6 +252,7 @@ double cosine_invcdf(double p)
         x = _poly_approx(cbrt(12*M_PI*p)) - M_PI;
     }
     else {
+        double y, y2;
         y = M_PI*(2*p - 1);
         y2 = y*y;
         x = y * _p2(y2) / _q2(y2);
