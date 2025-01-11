@@ -70,6 +70,9 @@
 
 #pragma once
 
+#include <algorithm>
+#include <array>
+
 #include "../config.h"
 
 namespace xsf {
@@ -144,16 +147,21 @@ void aswfa(T x, int m, int n, T c, int kd, T cv, T *s1f, T *s1d) {
 
     int ip, k, nm, nm2;
     T a0, d0, d1, r, su1, su2, x0, x1;
-    T *ck = (T *) calloc(200, sizeof(T));
-    T *df = (T *) calloc(200, sizeof(T));
+
+    thread_local std::array<T, 200> ck;
+    std::fill(ck.begin(), ck.end(), 0);
+
+    thread_local std::array<T, 200> df;
+    std::fill(df.begin(), df.end(), 0);
+
     const T eps = 1e-14;
     x0 = x;
     x = fabs(x);
     ip = ((n-m) % 2 == 0 ? 0 : 1);
     nm = 40 + (int)((n-m)/2 + c);
     nm2 = nm/2 - 2;
-    sdmn(m, n, c, cv, kd, df);
-    sckb(m, n, c, df, ck);
+    sdmn(m, n, c, cv, kd, df.data());
+    sckb(m, n, c, df.data(), ck.data());
     x1 = 1.0 - x*x;
     if ((m == 0) && (x1 == 0.0)) {
         a0 = 1.0;
@@ -191,7 +199,6 @@ void aswfa(T x, int m, int n, T c, int kd, T cv, T *s1f, T *s1d) {
     if ((x0 < 0.0) && (ip == 0)) { *s1d = -*s1d; }
     if ((x0 < 0.0) && (ip == 1)) { *s1f = -*s1f; }
     x = x0;
-    free(ck); free(df);
     return;
 }
 
@@ -275,9 +282,13 @@ void cbk(int m, int n, T c, T cv, T qt, T *ck, T *bk) {
 
     ip = ((n - m) % 2 == 0 ? 0 : 1);
     nm = 25 + (int)(0.5 * (n - m) + c);
-    T *u = (T *) calloc(200, sizeof(T));
-    T *v = (T *) calloc(200, sizeof(T));
-    T *w = (T *) calloc(200, sizeof(T));
+
+    thread_local std::array<T, 200> u;
+    std::fill(u.begin(), u.end(), 0);
+    thread_local std::array<T, 200> v;
+    std::fill(v.begin(), v.end(), 0);
+    thread_local std::array<T, 200> w;
+    std::fill(w.begin(), w.end(), 0);
 
     u[0] = 0.0;
     n2 = nm - 2;
@@ -345,7 +356,6 @@ void cbk(int m, int n, T c, T cv, T qt, T *ck, T *bk) {
     for (k = n2 - 1; k >= 1; k--) {
         bk[k - 1] -= w[k - 1] * bk[k];
     }
-    free(u); free(v); free(w);
     return;
 }
 
@@ -2986,7 +2996,9 @@ inline void jdzo(int nt, double *zo, int *n, int *m, int *p) {
     int i, j, k, L, L0, L1, L2, mm, nm;
     double x, x0, x1, x2, xm;
 
-    int* p1 = (int *) calloc(70, sizeof(int));
+    thread_local std::array<int, 70> p1;
+    std::fill(p1.begin(), p1.end(), 0);
+
     // Compared to specfun.f we use a single array instead of separate
     // three arrays and use pointer arithmetic to access. Their usage
     // is pretty much one-shot hence does not complicate the code.
@@ -2994,10 +3006,12 @@ inline void jdzo(int nt, double *zo, int *n, int *m, int *p) {
     // Note: ZO and ZOC arrays are 0-indexed in specfun.f
 
     // m1, n1, zoc -> 70 + 70 + 71
-    double* mnzoc = (double *) calloc(211, sizeof(double));
+    thread_local std::array<double, 211> mnzoc;
+    std::fill(mnzoc.begin(), mnzoc.end(), 0);
 
     // bj, dj, fj -> 101 + 101 + 101
-    double* bdfj = (double *) calloc(303, sizeof(double));
+    thread_local std::array<double, 303> bdfj;
+    std::fill(bdfj.begin(), bdfj.end(), 0);
 
     x = 0;
 
@@ -3093,9 +3107,6 @@ L30:
         /* 45 */
         L0 = L2;
     }
-    free(bdfj);
-    free(mnzoc);
-    free(p1);
     return;
 }
 
@@ -4367,8 +4378,10 @@ void mtu0(int kf, int m, T q, T x, T *csf, T *csd) {
         return;
     }
 
-    T *fg = (T *) calloc(251, sizeof(T));
-    fcoef(kd, m, q, a, fg);
+    thread_local std::array<T, 251> fg;
+    std::fill(fg.begin(), fg.end(), 0);
+
+    fcoef(kd, m, q, a, fg.data());
 
     ic = (int)(m / 2) + 1;
     xr = x * rd;
@@ -4403,7 +4416,6 @@ void mtu0(int kf, int m, T q, T x, T *csf, T *csd) {
             break;
         }
     }
-    free(fg);
     return;
 }
 
@@ -4464,18 +4476,26 @@ void mtu12(int kf, int kc, int m, T q, T x, T *f1r, T *d1r, T *f2r, T *d2r) {
         return;
     }
 
-    // allocate memory after a possible NAN return
-    T *fg = (T *) calloc(251, sizeof(T));
-    T *bj1 = (T *) calloc(252, sizeof(T));
-    T *dj1 = (T *) calloc(252, sizeof(T));
-    T *bj2 = (T *) calloc(252, sizeof(T));
-    T *dj2 = (T *) calloc(252, sizeof(T));
-    T *by1 = (T *) calloc(252, sizeof(T));
-    T *dy1 = (T *) calloc(252, sizeof(T));
-    T *by2 = (T *) calloc(252, sizeof(T));
-    T *dy2 = (T *) calloc(252, sizeof(T));
+    thread_local std::array<T, 251> fg;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> bj1;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> dj1;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> bj2;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> dj2;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> by1;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> dy1;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> by2;
+    std::fill(fg.begin(), fg.end(), 0);
+    thread_local std::array<T, 252> dy2;
+    std::fill(dy2.begin(), dy2.end(), 0);
 
-    fcoef(kd, m, q, a, fg);
+    fcoef(kd, m, q, a, fg.data());
     ic = (int)(m / 2) + 1;
     if (kd == 4) { ic = m / 2; }
 
@@ -4483,8 +4503,8 @@ void mtu12(int kf, int kc, int m, T q, T x, T *f1r, T *d1r, T *f2r, T *d2r) {
     c2 = exp(x);
     u1 = sqrt(q) * c1;
     u2 = sqrt(q) * c2;
-    jynb(km+1, u1, &nm, bj1, dj1, by1, dy1);
-    jynb(km+1, u2, &nm, bj2, dj2, by2, dy2);
+    jynb(km+1, u1, &nm, bj1.data(), dj1.data(), by1.data(), dy1.data());
+    jynb(km+1, u2, &nm, bj2.data(), dj2.data(), by2.data(), dy2.data());
     w1 = 0.0;
     w2 = 0.0;
 
@@ -4522,9 +4542,6 @@ void mtu12(int kf, int kc, int m, T q, T x, T *f1r, T *d1r, T *f2r, T *d2r) {
         }
         *d1r *= sqrt(q) / fg[0];
         if (kc == 1) {
-            free(fg);
-            free(bj1);free(dj1);free(bj2);free(dj2);
-            free(by1);free(dy1);free(by2);free(dy2);
             return;
         }
     }
@@ -4560,10 +4577,6 @@ void mtu12(int kf, int kc, int m, T q, T x, T *f1r, T *d1r, T *f2r, T *d2r) {
         w2 = *d2r;
     }
     *d2r = *d2r * sqrt(q) / fg[0];
-
-    free(fg);
-    free(bj1);free(dj1);free(bj2);free(dj2);
-    free(by1);free(dy1);free(by2);free(dy2);
     return;
 }
 
@@ -4629,7 +4642,7 @@ template <typename T>
 void qstar(int m, int n, T c, T ck1, T *ck, T *qs, T *qt) {
     int ip, i, l, k;
     T r, s, sk, qs0;
-    T *ap = (T *) malloc(200*sizeof(T));
+    thread_local std::array<T, 200> ap;
     ip = ((n - m) == 2 * ((n - m) / 2) ? 0 : 1);
     r = 1.0 / pow(ck[0], 2);
     ap[0] = r;
@@ -4655,7 +4668,6 @@ void qstar(int m, int n, T c, T ck1, T *ck, T *qs, T *qt) {
     }
     *qs = pow(-1, ip) * (ck1) * (ck1 * qs0) / c;
     *qt = -2.0 / (ck1) * (*qs);
-    free(ap);
     return;
 }
 
@@ -4712,9 +4724,13 @@ inline void rmn1(int m, int n, T c, T x, int kd, T *df, T *r1f, T *r1d) {
     T a0, b0, cx, r, r0, r1, r2, r3, reg, sa0, suc, sud, sum, sw, sw1;
     int ip, j, k, l, lg, nm, nm1, nm2, np;
 
-    T *ck = (T *) calloc(200, sizeof(T));
-    T *dj = (T *) calloc(252, sizeof(T));
-    T *sj = (T *) calloc(252, sizeof(T));
+    thread_local std::array<T, 200> ck;
+    std::fill(ck.begin(), ck.end(), 0);
+    thread_local std::array<T, 252> dj;
+    std::fill(dj.begin(), dj.end(), 0);
+    thread_local std::array<T, 252> sj;
+    std::fill(sj.begin(), sj.end(), 0);
+
     const T eps = 1.0e-14;
 
     nm1 = (int)((n - m) / 2);
@@ -4738,7 +4754,7 @@ inline void rmn1(int m, int n, T c, T x, int kd, T *df, T *r1f, T *r1d) {
     }
 
     if (x == 0.0) {
-        sckb(m, n, c, df, ck);
+        sckb(m, n, c, df, ck.data());
 
         sum = 0.0;
         sw1 = 0.0;
@@ -4771,13 +4787,12 @@ inline void rmn1(int m, int n, T c, T x, int kd, T *df, T *r1f, T *r1d) {
             *r1f = 0.0;
             *r1d = sum / (sa0 * suc) * df[0] * reg;
         }
-        free(ck);free(dj);free(sj);
         return;
     }
 
     cx = c * x;
     nm2 = 2 * nm + m;
-    sphj(cx, nm2, &nm2, sj, dj);
+    sphj(cx, nm2, &nm2, sj.data(), dj.data());
 
     a0 = pow(1.0 - kd / (x * x), 0.5 * m) / suc;
     *r1f = 0.0;
@@ -4824,7 +4839,6 @@ inline void rmn1(int m, int n, T c, T x, int kd, T *df, T *r1f, T *r1d) {
         sw = sud;
     }
     *r1d = b0 + a0 * c * sud;
-    free(ck);free(dj);free(sj);
     return;
 }
 
@@ -4845,8 +4859,11 @@ inline void rmn2l(int m, int n, T c, T x, int Kd, T *Df, T *R2f, T *R2d, int *Id
     int ip, nm1, nm, nm2, np, j, k, l, lg, id1, id2;
     T a0, b0, cx, reg, r0, r, suc, sud, sw, eps1, eps2;
     const T eps = 1.0e-14;
-    T *sy = (T *) calloc(252, sizeof(T));
-    T *dy = (T *) calloc(252, sizeof(T));
+
+    thread_local std::array<T, 252> sy;
+    std::fill(sy.begin(), sy.end(), 0);
+    thread_local std::array<T, 252> dy;
+    std::fill(dy.begin(), dy.end(), 0);
 
     ip = 1;
     nm1 = (int)((n - m) / 2);
@@ -4860,7 +4877,7 @@ inline void rmn2l(int m, int n, T c, T x, int Kd, T *Df, T *R2f, T *R2d, int *Id
     }
     nm2 = 2 * nm + m;
     cx = c * x;
-    sphy(cx, nm2, &nm2, sy, dy);
+    sphy(cx, nm2, &nm2, sy.data(), dy.data());
     r0 = reg;
 
     for (j = 1; j <= 2 * m + ip; ++j) {
@@ -4905,8 +4922,6 @@ inline void rmn2l(int m, int n, T c, T x, int Kd, T *Df, T *R2f, T *R2d, int *Id
 
     if (np >= nm2) {
         *Id = 10;
-        free(sy);
-        free(dy);
         return;
     }
 
@@ -4934,8 +4949,6 @@ inline void rmn2l(int m, int n, T c, T x, int Kd, T *Df, T *R2f, T *R2d, int *Id
     *R2d = b0 + a0 * c * sud;
     id2 = (int)log10(eps2 / fabs(sud) + eps);
     *Id = (id1 > id2) ? id1 : id2;
-    free(sy);
-    free(dy);
     return;
 }
 
@@ -4967,16 +4980,20 @@ inline void rmn2so(int m, int n, T c, T x, T cv, int kd, T *df, T *r2f, T *r2d) 
         *r2d = 1.0e+300;
         return;
     }
-    T *bk = (T *) calloc(200, sizeof(double));
-    T *ck = (T *) calloc(200, sizeof(double));
-    T *dn = (T *) calloc(200, sizeof(double));
+
+    thread_local std::array<T, 200> bk;
+    std::fill(bk.begin(), bk.end(), 0);
+    thread_local std::array<T, 200> ck;
+    std::fill(ck.begin(), ck.end(), 0);
+    thread_local std::array<T, 200> dn;
+    std::fill(dn.begin(), dn.end(), 0);
 
     nm = 25 + (int)((n - m) / 2 + c);
     ip = (n - m) % 2;
-    sckb(m, n, c, df, ck);
-    kmn(m, n, c, cv, kd, df, dn, &ck1, &ck2);
-    qstar(m, n, c, ck1, ck, &qs, &qt);
-    cbk(m, n, c, cv, qt, ck, bk);
+    sckb(m, n, c, df, ck.data());
+    kmn(m, n, c, cv, kd, df, dn.data(), &ck1, &ck2);
+    qstar(m, n, c, ck1, ck.data(), &qs, &qt);
+    cbk(m, n, c, cv, qt, ck.data(), bk.data());
 
     if (x == 0.0) {
         sum = 0.0;
@@ -4998,13 +5015,12 @@ inline void rmn2so(int m, int n, T c, T x, T cv, int kd, T *df, T *r2f, T *r2d) 
             *r2d = -0.5 * pi * qs * r1d;
         }
     } else {
-        gmn(m, n, c, x, bk, &gf, &gd);
+        gmn(m, n, c, x, bk.data(), &gf, &gd);
         rmn1(m, n, c, x, kd, df, &r1f, &r1d);
         h0 = atan(x) - 0.5 * pi;
         *r2f = qs * r1f * h0 + gf;
         *r2d = qs * (r1d * h0 + r1f / (1.0 + x * x)) + gd;
     }
-    free(bk); free(ck); free(dn);
     return;
 }
 
@@ -5029,12 +5045,12 @@ void rmn2sp(int m, int n, T c, T x, T cv, int kd, T *df, T *r2f, T *r2d) {
            sf, gb, spl, gc, sd, r4, spd1, spd2, su2, ck1, ck2, sum, sdm;
 
     // fortran index start from 0
-    T *pm = (T *) malloc(252*sizeof(T));
-    T *pd = (T *) malloc(252*sizeof(T));
-    T *qm = (T *) malloc(252*sizeof(T));
-    T *qd = (T *) malloc(252*sizeof(T));
+    thread_local std::array<T, 252> pm;
+    thread_local std::array<T, 252> pd;
+    thread_local std::array<T, 252> qm;
+    thread_local std::array<T, 252> qd;
     // fortran index start from 1
-    T *dn = (T *) malloc(201*sizeof(T));
+    thread_local std::array<T, 201> dn;
     const T eps = 1.0e-14;
 
     nm1 = (n - m) / 2;
@@ -5042,9 +5058,9 @@ void rmn2sp(int m, int n, T c, T x, T cv, int kd, T *df, T *r2f, T *r2d) {
     nm2 = 2 * nm + m;
     ip = (n - m) % 2;
 
-    kmn(m, n, c, cv, kd, df, dn, &ck1, &ck2);
-    lpmns(m, nm2, x, pm, pd);
-    lqmns(m, nm2, x, qm, qd);
+    kmn(m, n, c, cv, kd, df, dn.data(), &ck1, &ck2);
+    lpmns(m, nm2, x, pm.data(), pd.data());
+    lqmns(m, nm2, x, qm.data(), qd.data());
 
     su0 = 0.0;
     sw = 0.0;
@@ -5134,7 +5150,6 @@ void rmn2sp(int m, int n, T c, T x, T cv, int kd, T *df, T *r2f, T *r2d) {
     sdm = sd0 + sd1 + sd2;
     *r2f = sum / ck2;
     *r2d = sdm / ck2;
-    free(pm); free(pd); free(qm); free(qd); free(dn);
     return;
 }
 
@@ -5170,21 +5185,20 @@ inline void rswfp(int m, int n, T c, T x, T cv, int kf, T *r1f, T *r1d, T *r2f, 
     //          of the second kind for a small argument
     // ==============================================================
 
-    T *df = (T *) malloc(200*sizeof(double));
+    thread_local std::array<T, 200> df;
     int id, kd = 1;
 
-    sdmn(m, n, c, cv, kd, df);
+    sdmn(m, n, c, cv, kd, df.data());
 
     if (kf != 2) {
-        rmn1(m, n, c, x, kd, df, r1f, r1d);
+        rmn1(m, n, c, x, kd, df.data(), r1f, r1d);
     }
     if (kf > 1) {
-        rmn2l(m, n, c, x, kd, df, r2f, r2d, &id);
+        rmn2l(m, n, c, x, kd, df.data(), r2f, r2d, &id);
         if (id > -8) {
-            rmn2sp(m, n, c, x, cv, kd, df, r2f, r2d);
+            rmn2sp(m, n, c, x, cv, kd, df.data(), r2f, r2d);
         }
     }
-    free(df);
     return;
 }
 
@@ -5220,24 +5234,23 @@ void rswfo(int m, int n, T c, T x, T cv, int kf, T *r1f, T *r1d, T *r2f, T *r2d)
     //          the second kind for a small argument
     // ==========================================================
 
-    T *df = (T *) malloc(200*sizeof(T));
+    thread_local std::array<T, 200> df;
     int id, kd = -1;
 
-    sdmn(m, n, c, cv, kd, df);
+    sdmn(m, n, c, cv, kd, df.data());
 
     if (kf != 2) {
-        rmn1(m, n, c, x, kd, df, r1f, r1d);
+        rmn1(m, n, c, x, kd, df.data(), r1f, r1d);
     }
     if (kf > 1) {
         id = 10;
         if (x > 1e-8) {
-            rmn2l(m, n, c, x, kd, df, r2f, r2d, &id);
+            rmn2l(m, n, c, x, kd, df.data(), r2f, r2d, &id);
         }
         if (id > -1) {
-            rmn2so(m, n, c, x, cv, kd, df, r2f, r2d);
+            rmn2so(m, n, c, x, cv, kd, df.data(), r2f, r2d);
         }
     }
-    free(df);
     return;
 }
 
@@ -5484,14 +5497,23 @@ void segv(int m, int n, T c, int kd, T *cv, T *eg) {
     }
 
     // TODO: Following array sizes should be decided dynamically
-    T *a = (T *) calloc(300, sizeof(T));
-    T *b = (T *) calloc(100, sizeof(T));
-    T *cv0 = (T *) calloc(100, sizeof(T));
-    T *d = (T *) calloc(300, sizeof(T));
-    T *e = (T *) calloc(300, sizeof(T));
-    T *f = (T *) calloc(300, sizeof(T));
-    T *g = (T *) calloc(300, sizeof(T));
-    T *h = (T *) calloc(100, sizeof(T));
+    thread_local std::array<T, 300> a;
+    std::fill(a.begin(), a.end(), 0);
+    thread_local std::array<T, 100> b;
+    std::fill(b.begin(), b.end(), 0);
+    thread_local std::array<T, 100> cv0;
+    std::fill(cv0.begin(), cv0.end(), 0);
+    thread_local std::array<T, 300> d;
+    std::fill(d.begin(), d.end(), 0);
+    thread_local std::array<T, 300> e;
+    std::fill(e.begin(), e.end(), 0);
+    thread_local std::array<T, 300> f;
+    std::fill(f.begin(), f.end(), 0);
+    thread_local std::array<T, 300> g;
+    std::fill(g.begin(), g.end(), 0);
+    thread_local std::array<T, 100> h;
+    std::fill(h.begin(), h.end(), 0);
+
     icm = (n-m+2)/2;
     nm = 10 + (int)(0.5*(n-m)+c);
     cs = c*c*kd;
@@ -5567,7 +5589,6 @@ void segv(int m, int n, T c, int kd, T *cv, T *eg) {
         }
     }
     *cv = eg[n-m];
-    free(a);free(b);free(cv0);free(d);free(e);free(f);free(g);free(h);
     return;
 }
 
