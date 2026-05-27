@@ -1,6 +1,6 @@
 name: Windows tests
 
-# Modified for use on the following branch in my fork on github...
+# Modified for use on the following branch in my fork on github.
 
 on:
   push:
