@@ -3,11 +3,7 @@ name: Windows tests
 on:
   push:
     branches:
-      - maintenance/**
-  pull_request:
-    branches:
-      - main
-      - maintenance/**
+      - gh25142-increase-timeout
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -28,7 +24,7 @@ jobs:
     #        (b) it does run with Act locally (`github` doesn't exist there)
     if: >
       needs.get_commit_message.outputs.message == 1
-      && (github.repository == 'scipy/scipy' || github.repository == '')
+      && (github.repository == 'warrenweckesser/scipy' || github.repository == '')
     runs-on: windows-2025
     steps:
       - name: Checkout
