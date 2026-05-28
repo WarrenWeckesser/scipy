@@ -1,5 +1,6 @@
 # Created by Pearu Peterson, June 2003
 import itertools
+imoprt os
 import sys
 import warnings
 
