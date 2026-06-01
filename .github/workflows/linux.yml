@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - gh25142-full-local-tests
+  workflow_dispatch
 
 permissions:
    contents: read  # to fetch code (actions/checkout)
